@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список задач</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .task-list { margin-top: 20px; }
+        .task-item { margin: 5px 0; }
+    </style>
+</head>
+<body>
+<h1>Список задач</h1>
+
+<form id="taskForm">
+    <input type="text" id="taskTitle" placeholder="Введите задачу" required />
+    <button type="submit">Добавить задачу</button>
+</form>
+
+<div class="task-list" id="taskList">
+    <h2>Ваши задачи:</h2>
+    <div id="noTasksMessage" style="display: none;">Список задач пуст.</div>
+    <div id="tasksContainer"></div>
+</div>
+
+<script>
+    const taskForm = document.getElementById('taskForm');
+    const taskTitleInput = document.getElementById('taskTitle');
+    const tasksContainer = document.getElementById('tasksContainer');
+    const noTasksMessage = document.getElementById('noTasksMessage');
+
+    // Функция для обновления списка задач
+    function updateTaskList() {
+        fetch('/api/tasks') // Запрос к вашему контроллеру
+            .then(response => response.json())
+            .then(tasks => {
+                tasksContainer.innerHTML = '';
+                if (tasks.length === 0) {
+                    noTasksMessage.style.display = 'block';
+                } else {
+                    noTasksMessage.style.display = 'none';
+                    tasks.forEach(task => {
+                        const taskItem = document.createElement('div');
+                        taskItem.className = 'task-item';
+                        taskItem.textContent = task.title; // Или другой атрибут задачи
+                        tasksContainer.appendChild(taskItem);
+                    });
+                }
+            });
+    }
+
+    // Обработчик отправки формы
+    taskForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // предотвращаем перезагрузку страницы
+        const taskTitle = taskTitleInput.value;
+
+        fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title: taskTitle }),
+        })
+        .then(response => {
+            if (response.ok) {
+                taskTitleInput.value = ''; // очищаем поле ввода
+                updateTaskList(); // обновляем список задач
+            } else {
+                console.error('Ошибка при добавлении задачи');
+            }
+        });
+    });
+
+    // Инициализируем список задач при загрузке страницы
+    updateTaskList();
+</script>
+</body>
+</html>
